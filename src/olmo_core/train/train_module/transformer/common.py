@@ -111,6 +111,17 @@ def parallelize_model(
         else:
             log.warning("Skipping model compilation since CUDA is not available")
 
+    # Maybe apply LoRA.
+    # NOTE: This must happen after compile but before FSDP, so that FSDP sees the LoRA
+    # parameters and shards them properly.
+    lora_config = getattr(model_parts[0], "_lora_config", None)
+    if lora_config is not None:
+        from olmo_core.nn.lora import apply_lora, print_trainable_parameters
+        for m in model_parts:
+            replaced = apply_lora(m, lora_config)
+            log.info(f"Applied LoRA (r={lora_config.r}, alpha={lora_config.alpha}) to {len(replaced)} modules")
+            print_trainable_parameters(m)
+
     # Maybe shard/replicate according to data parallel config.
     if dp_config is not None:
         assert world_mesh is not None
@@ -152,5 +163,14 @@ def parallelize_model(
             device=device,
             world_mesh=world_mesh,
         )
+
+    # Initialize LoRA parameters (after materialization from meta device).
+    if lora_config is not None:
+        from olmo_core.nn.lora import LoRALinear
+        for m in model_parts:
+            for module in m.modules():
+                if isinstance(module, LoRALinear):
+                    module.reset_lora_parameters()
+        log.info("Initialized LoRA parameters")
 
     return model
