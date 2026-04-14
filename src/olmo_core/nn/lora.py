@@ -59,12 +59,13 @@ class LoRALinear(nn.Module):
         if self.base_layer.bias is not None:
             self.base_layer.bias.requires_grad_(False)
 
-        # Detect if base layer is on meta device
+        # Match device and dtype of base layer
         device = base_layer.weight.device
+        dtype = base_layer.weight.dtype
 
-        # Low-rank matrices (created on same device as base, including meta)
-        self.lora_A = nn.Linear(base_layer.in_features, r, bias=False, device=device)
-        self.lora_B = nn.Linear(r, base_layer.out_features, bias=False, device=device)
+        # Low-rank matrices (same device and dtype as base)
+        self.lora_A = nn.Linear(base_layer.in_features, r, bias=False, device=device, dtype=dtype)
+        self.lora_B = nn.Linear(r, base_layer.out_features, bias=False, device=device, dtype=dtype)
 
         # Dropout
         self.lora_dropout = nn.Dropout(dropout) if dropout > 0.0 else nn.Identity()
