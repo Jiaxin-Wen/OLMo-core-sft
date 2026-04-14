@@ -52,10 +52,7 @@ def has_flash_attn_4() -> bool:
     if flash_attn_4 is not None:
         if torch.cuda.is_available():
             compute_capability = torch.cuda.get_device_capability()
-            return compute_capability >= (10, 0) and compute_capability <= (
-                12,
-                0,
-            )  # Blackwell, Blackwell Ultra
+            return (9, 0) <= compute_capability <= (12, 0)  # Hopper, Blackwell, Blackwell Ultra
         return True
     return False
 
