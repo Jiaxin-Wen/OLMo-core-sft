@@ -73,6 +73,23 @@ class LoRALinear(nn.Module):
         if device.type != "meta":
             self.reset_lora_parameters()
 
+    @property
+    def weight(self) -> torch.Tensor:
+        """Expose base layer weight for compatibility with FSDP and other utilities."""
+        return self.base_layer.weight
+
+    @property
+    def bias(self):
+        return self.base_layer.bias
+
+    @property
+    def in_features(self) -> int:
+        return self.base_layer.in_features
+
+    @property
+    def out_features(self) -> int:
+        return self.base_layer.out_features
+
     def reset_lora_parameters(self):
         """Initialize LoRA parameters: Kaiming for A, zeros for B."""
         nn.init.kaiming_uniform_(self.lora_A.weight, a=math.sqrt(5))
