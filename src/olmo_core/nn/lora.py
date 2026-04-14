@@ -98,8 +98,10 @@ class LoRALinear(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         base_out = self.base_layer(x)
-        lora_out = self.lora_B(self.lora_A(self.lora_dropout(x)))
-        return base_out + lora_out * self.scaling
+        # Cast input to LoRA dtype to avoid bf16/fp32 mismatch with torch.compile
+        lora_x = x.to(self.lora_A.weight.dtype) if x.dtype != self.lora_A.weight.dtype else x
+        lora_out = self.lora_B(self.lora_A(self.lora_dropout(lora_x)))
+        return base_out + lora_out.to(base_out.dtype) * self.scaling
 
     def merge(self) -> nn.Linear:
         """Merge LoRA weights into base layer and return a plain nn.Linear."""
