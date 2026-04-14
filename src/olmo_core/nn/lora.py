@@ -35,9 +35,10 @@ class LoRAConfig(Config):
     """Dropout applied to input before LoRA path."""
 
     target_modules: List[str] = field(
-        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        default_factory=lambda: ["w_q", "w_k", "w_v", "w_out", "w1", "w2", "w3"]
     )
-    """Names of linear modules to apply LoRA to (matched against the final component of the parameter name)."""
+    """Names of linear modules to apply LoRA to (matched against the final component of the module name).
+    Defaults cover OLMo-core attention (w_q, w_k, w_v, w_out) and FFN (w1, w2, w3)."""
 
 
 class LoRALinear(nn.Module):
